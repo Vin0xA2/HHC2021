@@ -1,0 +1,59 @@
+In-game terminal
+Objective: find the password stored on another machine on the network.
+Reference: https://gist.github.com/chriselgee/c1c69756e527f649d0a95b6f20337c2f
+Tools:
+  netcat
+  nmap
+  ping/ping6
+  curl
+
+
+(Look up current host's IP and subnet mask)
+~$ ifconfig
+  inet: 192.168.160.3 (netmask: 255.255.240.0) (20 bits)
+  inet6: fe80::42:c0ff:fea8:a003 (prefixlen 64)
+  inet6: 2604:6000:1528:cd:d55a:f8a7:d30a:2 (prefixlen 112)
+
+
+(NMAP other IPs in same subnet.)
+~$ nmap 192.168.160.0/20
+  Host: 192.168.160.1
+    PORT     STATE    SERVICE
+    22/tcp   open     ssh
+    3000/tcp filtered ppp
+    8000/tcp open     http-alt
+  Host: ipv6-server.ipv6guest.kringlecastle.com (192.168.160.2)
+    PORT     STATE    SERVICE
+    80/tcp   open     http
+  Host: 192.168.160.3
+    All 1000 scanned ports closed.
+
+
+(cURL the HTTP host.)
+~$ curl ipv6-server.ipv6guest.kringlecastle.com
+  <html>
+  <head><title>Candy Striper v6</title></head>
+  <body>
+  <marquee>Connect to the other open TCP port to get the striper's activation phrase!</marquee>
+  </body>
+  </html>
+
+
+(NMAP scan all ports.)
+~$ nmap -p- ipv6-server.ipv6guest.kringlecastle.com
+  Other addresses for ipv6-server.ipv6guest.kringlecastle.com (not scanned): 2604:6000:1528:cd:d55a:f8a7:d30a:e405
+
+
+(NMAP scan all ports of the IPv6 address.)
+~$ nmap -6 -p- 2604:6000:1528:cd:d55a:f8a7:d30a:e405
+  PORT     STATE SERVICE
+  80/tcp   open  http
+  9000/tcp open  cslistener
+
+
+(cURL the IPv6 address and port 9000.)
+~$ curl [2604:6000:1528:cd:d55a:f8a7:d30a:e405]:9000
+  PieceOnEarth
+
+
+Answer: PieceOnEarth

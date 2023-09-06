@@ -1,0 +1,196 @@
+https://tracer.kringlecastle.com/
+Objective: Complete Shellcode Primer exercise 11. "All of our speakers and organizers, providing the gift of <blank>, free to the community." Find <blank>.
+Reference: https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/
+
+
+1) Introduction: click Execute at the bottom of the page to see the Debugger run through the pre-populated code. Click on each line under History to see the Before/After of each line of code.
+
+
+2) Loops: same as Introduction.
+
+
+3) Getting Started: enter a return statement and Execute.
+  ret
+
+
+4) Returning a Value: use mov to put 1337 into rax register, enter ret, and Execute.
+  mov rax,1337
+  ret
+
+
+5) System Calls: call sys_exit with code 99. (https://blog.rchapman.org/posts/Linux_System_Call_Table_for_x86_64/)
+  mov rax,60
+  mov rdi,99
+  syscall
+
+
+6) Calling Into the Void: code below pre-populated. Execute and see the <invalid memory> error under History. (SIGSEGV) fault is in the Exit code.
+  push 0x12345678
+  ret
+
+
+7) Getting RIP: pop the address after the call - the No Op (nop) instruction - into rax then return.
+  ; The call pushes the return address to the stack
+  call place_below_the_nop
+
+  ; Function *thinks* it's supposed to return here
+  nop
+
+  ; A 'label' - start of a function accord to call
+  place_below_the_nop:
+
+  ; Pop return address out of stack and return
+  pop rax
+  ret
+
+  ; Address of nop = 0x13370005 (in rax before ret resets the registers. nop didn't execue)
+
+
+8) Hello, World!: Hello World is sitting in memory. Call past it and pop its address into rax.
+  ; This would be a good place for a call
+  call random
+
+  ; This is the literal string 'Hello World', null terminated, as code. Except
+  ; it'll crash if it actually tries to run, so we'd better jump over it!
+  db 'Hello World',0
+
+  ; This would be a good place for a label and a pop
+  random:
+  pop rax
+
+  ; This would be a good place for a re... oh wait, it's already here. Hooray!
+  ret
+
+  ; rax = 0x13370005 || String pointer: "Hello World"
+
+
+9) Hello, World!!: call sys_write to write "Hello World!" to stdout.
+  ; TODO: Get a reference to this string into the correct register
+  call random
+  db 'Hello World!',0
+  random:
+
+  ; Set up a call to sys_write
+  ; TODO: Set rax to the correct syscall number for sys_write
+  mov rax,1
+
+  ; TODO: Set rdi to the first argument (the file descriptor, 1)
+  mov rdi,1
+
+  ; TODO: Set rsi to the second argument (buf - this is the "Hello World" string)
+  pop rsi
+
+  ; TODO: Set rdx to the third argument (length of the string, in bytes)
+  mov rdx,12
+
+  ; Perform the syscall
+  syscall
+
+  ; Return cleanly
+  ret
+
+
+10) Opening a File: call sys_open to open /etc/passwd and then return the file handle in rax.
+  ; TODO: Get a reference to this string into the correct register
+  call random
+  db '/etc/passwd',0
+  random:
+
+  ; Set up a call to sys_open
+  ; TODO: Set rax to the correct syscall number
+  mov rax,2
+
+  ; TODO: Set rdi to the first argument (the filename)
+  pop rdi
+
+  ; TODO: Set rsi to the second argument (flags - 0 is fine)
+  mov rsi,0
+
+  ; TODO: Set rdx to the third argument (mode - 0 is also fine)
+  mov rdx,0
+
+  ; Perform the syscall
+  syscall
+
+  ; syscall sets rax to the file handle, so to return the file handle we don't
+  ; need to do anything else!
+  ret
+
+
+11) Reading a File: make 4 syscalls to write content of /var/northpolesecrets.txt to stdout.
+  ; TODO: Get a reference to this
+  call random
+  db '/var/northpolesecrets.txt',0
+  random:
+
+  ; TODO: Call sys_open
+  mov rax,2
+  pop rdi
+  mov rsi,0
+  mov rdx,0
+  syscall
+
+  ; TODO: Call sys_read on the file handle and read it into rsp
+  mov rdi,rax
+  mov rsi,rsp
+  mov rdx,138
+  mov rax,0
+  syscall
+
+  ; TODO: Call sys_write to write the contents from rsp to stdout (1)
+  mov rdi,1
+  mov rsi,rsp
+  mov rdx,rax
+  mov rax,1
+  syscall
+
+  ; TODO: Call sys_exit
+  mov rax,60
+  mov rdi,99
+  syscall
+
+
+Stdout:
+Secret to KringleCon success: all of our speakers and organizers, providing the gift of cyber security knowledge, free to the community.
+
+
+Answer: cyber security knowledge
+
+
+Secret: Did you know that you can add ?cheat after the URL (before the #) to unlock our solutions?
+
+
+++++++++++
+The Cheat
+++++++++++
+; TODO: Get a reference to this
+call bottom
+db '/var/northpolesecrets.txt',0
+bottom:
+
+; TODO: Call sys_open
+mov rax, 2 ; syscall (sys_open)
+pop rdi ; filename
+mov rsi, 0
+mov rdx, 0
+syscall
+
+; TODO: Call sys_read on the file handle and read it into rsp
+mov rdi, rax ; handle
+mov rax, 0 ; syscall (sys_read)
+mov rsi, rsp ; buffer
+mov rdx, 138 ; length
+syscall
+
+; TODO: Call sys_write to write the contents from rsp to stdout (1)
+mov rdx, rax ; length
+mov rax, 1 ; syscall (sys_read)
+mov rdi, 1 ; handle (stdout)
+mov rsi, rsp ; buffer
+syscall
+
+; TODO: Call sys_exit
+mov rax, 60
+mov rdi, 0
+syscall
+++++++++++

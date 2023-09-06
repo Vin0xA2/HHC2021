@@ -1,0 +1,137 @@
+In-game Terminal
+Objective: Run the make_the_candy* binary. Use strace and ltrace to find the missing config file.
+Reference: https://www.youtube.com/watch?v=quQmdgIUCaU
+
+
+~$ ls
+  make_the_candy*
+
+
+~$ ./make_the_candy 
+  Unable to open configuration file.
+
+
+(Reference Youtube vid shows strace displays some setup syscalls and then what the program does.)
+(Using ltrace is cleaner.)
+~$ ltrace ./make_the_candy 
+  fopen("registration.json", "r")                           = 0
+  puts("Unable to open configuration fil"...Unable to open configuration file.
+  )               = 35
+  +++ exited (status 1) +++
+
+
+(It's looking for a file: registration.json)
+(Create it and rerun.)
+~$ touch registration.json
+~$ ltrace ./make_the_candy
+  fopen("registration.json", "r")                           = 0x5615adefb260
+  getline(0x7fffd3a9e5a0, 0x7fffd3a9e5a8, 0x5615adefb260, 0x7fffd3a9e5a8) = -1
+  puts("Unregistered - Exiting."Unregistered - Exiting.
+  )                           = 24
+  +++ exited (status 1) +++
+
+
+(It's reading the lines in the file. Add random strings and rerun ltrace)
+~$ nano registration.json 
+~$ ltrace ./make_the_candy
+  fopen("registration.json", "r")                           = 0x563c00986260
+  getline(0x7ffe7889b000, 0x7ffe7889b008, 0x563c00986260, 0x7ffe7889b008) = 2
+  strstr("A\n", "Registration")                             = nil
+  getline(0x7ffe7889b000, 0x7ffe7889b008, 0x563c00986260, 0x7ffe7889b008) = 2
+  strstr("B\n", "Registration")                             = nil
+  getline(0x7ffe7889b000, 0x7ffe7889b008, 0x563c00986260, 0x7ffe7889b008) = 2
+  strstr("C\n", "Registration")                             = nil
+  getline(0x7ffe7889b000, 0x7ffe7889b008, 0x563c00986260, 0x7ffe7889b008) = 1
+  strstr("\n", "Registration")                              = nil
+  getline(0x7ffe7889b000, 0x7ffe7889b008, 0x563c00986260, 0x7ffe7889b008) = -1
+  puts("Unregistered - Exiting."Unregistered - Exiting.
+  )                           = 24
+  +++ exited (status 1) +++
+
+
+(Now it's looking for the string: Registration.)
+~$ nano registration.json 
+~$ ltrace ./make_the_candy
+  fopen("registration.json", "r")                           = 0x5600e7551260
+  getline(0x7fff5da357d0, 0x7fff5da357d8, 0x5600e7551260, 0x7fff5da357d8) = 13
+  strstr("Registration\n", "Registration")                  = "Registration\n"
+  strchr("Registration\n", ':')                             = nil
+  getline(0x7fff5da357d0, 0x7fff5da357d8, 0x5600e7551260, 0x7fff5da357d8) = -1
+  puts("Unregistered - Exiting."Unregistered - Exiting.
+  )                           = 24
+  +++ exited (status 1) +++
+
+
+(Now it's looking for a colon symbol after "Registration" string.)
+~$ nano registration.json 
+~$ ltrace ./make_the_candy
+  fopen("registration.json", "r")                           = 0x558a8afb7260
+  getline(0x7ffe8c80a8c0, 0x7ffe8c80a8c8, 0x558a8afb7260, 0x7ffe8c80a8c8) = 14
+  strstr("Registration:\n", "Registration")                 = "Registration:\n"
+  strchr("Registration:\n", ':')                            = ":\n"
+  strstr(":\n", "True")                                     = nil
+  getline(0x7ffe8c80a8c0, 0x7ffe8c80a8c8, 0x558a8afb7260, 0x7ffe8c80a8c8) = -1
+  puts("Unregistered - Exiting."Unregistered - Exiting.
+  )                           = 24
+  +++ exited (status 1) +++
+
+
+(Now it's looking for the string "True" after the colon.)
+~$ nano registration.json 
+~$ ltrace ./make_the_candy
+  Launching...
+
+     *                              *
+      *                            *
+       *                          *
+        *                        *
+         *                      *
+          *                    *
+           *                  *
+            *                *
+             *              *
+              *            *
+               *          *
+                *        *
+                 *      *
+                  *    *
+                   *  *
+                    **
+                    **
+                   *  *
+                  *    *
+                 *      *
+                *        *
+               *          *
+              *            *
+             *              *
+            *                *
+           *                  *
+          *                    *
+         *                      *
+        *                        *
+       *                          *
+      *                            *
+     *                              *
+     *                              *
+     *                              *
+     *                              *
+      *                            *
+       *                          *
+        *                        *
+         *                      *
+          *                    *
+           *                  *
+            *                *
+             *              *
+              *            *
+               *          *
+                *        *
+                 *      *
+                  *    *
+                   *  *
+                    **
+         Candy making in progress
+
+
+(Success!)

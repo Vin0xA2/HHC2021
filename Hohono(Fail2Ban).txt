@@ -1,0 +1,135 @@
+In-game Terminal
+Objective: Create fail2ban filter, jail, and action to add bad IP addresses to the naughtlist.
+
+
+(Read about jail configurations.)
+~# nano /etc/fail2ban/jail.conf
+
+
+(See what the log looks like.)
+~# head /var/log/hohono.log
+  2023-07-13 02:22:14 152.31.140.227: Request completed successfully
+  2023-07-13 02:22:14 83.194.126.142: Request completed successfully
+  2023-07-13 02:22:14 Login from 101.188.24.65 rejected due to unknown user name
+  2023-07-13 02:22:14 Valid heartbeat from 20.215.185.24
+  2023-07-13 02:22:15 Login from 32.169.148.254 rejected due to unknown user name
+  2023-07-13 02:22:15 Login from 63.241.82.24 successful
+  2023-07-13 02:22:15 Valid heartbeat from 140.250.232.23
+  2023-07-13 02:22:16 222.213.197.117: Request completed successfully
+  2023-07-13 02:22:16 Login from 29.124.199.48 successful
+  2023-07-13 02:22:16 Login from 63.122.111.199 successful
+
+
+(grep for keyword: failed)
+~# grep -i failed /var/log/hohono.log | sort | uniq -c | head
+      1 2023-07-15 16:57:20 Failed login from 160.107.48.146 for eve
+      1 2023-07-15 16:57:22 Failed login from 61.30.189.142 for sugarplum
+      1 2023-07-15 16:57:40 Failed login from 153.6.223.123 for alabaster
+      1 2023-07-15 16:58:04 Failed login from 207.148.213.141 for morcel
+      1 2023-07-15 16:58:24 Failed login from 207.148.213.141 for jewel
+      1 2023-07-15 16:58:57 Failed login from 178.149.85.241 for santa
+      1 2023-07-15 17:00:15 Failed login from 220.44.49.198 for ribb
+      1 2023-07-15 17:00:20 Failed login from 72.142.236.50 for bushy
+      1 2023-07-15 17:00:56 Failed login from 220.44.49.198 for fitzy
+      1 2023-07-15 17:01:02 Failed login from 171.224.44.15 for cupid
+
+
+(** Pattern = Failed login from <HOST> for \w+$)
+
+
+(grep for keyword: rejected)
+~# grep -i rejected /var/log/hohono.log | sort | uniq -c | head
+      1 2023-07-15 17:56:53 Login from 214.8.226.137 rejected due to unknown user name
+      1 2023-07-15 17:56:54 Login from 141.36.69.58 rejected due to unknown user name
+      1 2023-07-15 17:56:55 Login from 76.54.93.146 rejected due to unknown user name
+      1 2023-07-15 17:56:59 Login from 151.144.117.40 rejected due to unknown user name
+      1 2023-07-15 17:57:20 Login from 183.42.234.182 rejected due to unknown user name
+      1 2023-07-15 17:57:21 Login from 1.62.75.39 rejected due to unknown user name
+      1 2023-07-15 17:57:48 Login from 151.144.117.40 rejected due to unknown user name
+      1 2023-07-15 17:58:25 Login from 141.36.69.58 rejected due to unknown user name
+      1 2023-07-15 17:58:25 Login from 169.134.116.215 rejected due to unknown user name
+      1 2023-07-15 17:58:26 Login from 214.8.226.137 rejected due to unknown user name
+
+
+(** Pattern = Login from <HOST> rejected due to unknown user name$)
+
+
+(grep for keyword: malformed)
+~# grep -i malformed /var/log/hohono.log | sort | uniq -c | head
+      1 2023-07-15 17:57:18 169.134.116.215 sent a malformed request
+      1 2023-07-15 17:58:34 141.36.69.58 sent a malformed request
+      1 2023-07-15 17:59:10 141.36.69.58 sent a malformed request
+      1 2023-07-15 17:59:13 169.134.116.215 sent a malformed request
+      1 2023-07-15 17:59:26 1.62.75.39 sent a malformed request
+      1 2023-07-15 17:59:40 76.54.93.146 sent a malformed request
+      1 2023-07-15 17:59:44 183.42.234.182 sent a malformed request
+      1 2023-07-15 17:59:50 31.192.94.149 sent a malformed request
+      1 2023-07-15 17:59:59 31.192.94.149 sent a malformed request
+      1 2023-07-15 18:00:19 169.134.116.215 sent a malformed request
+
+
+(** Pattern = <HOST> sent a malformed request$)
+
+
+(grep for keyword: Invalid heartbeat)
+~# grep -i "Invalid heartbeat" /var/log/hohono.log | sort | uniq -c | head
+      1 2023-07-15 17:57:10 Invalid heartbeat 'bravo' from 143.126.235.100
+      1 2023-07-15 17:57:41 Invalid heartbeat 'alpha' from 143.126.235.100
+      1 2023-07-15 17:57:47 Invalid heartbeat 'delta' from 1.62.75.39
+      1 2023-07-15 17:58:00 Invalid heartbeat 'delta' from 31.192.94.149
+      1 2023-07-15 17:58:09 Invalid heartbeat 'charlie' from 141.36.69.58
+      1 2023-07-15 17:58:18 Invalid heartbeat 'charlie' from 1.62.75.39
+      1 2023-07-15 17:58:41 Invalid heartbeat 'charlie' from 141.36.69.58
+      1 2023-07-15 17:58:42 Invalid heartbeat 'alpha' from 141.36.69.58
+      1 2023-07-15 17:59:12 Invalid heartbeat 'alpha' from 31.192.94.149
+      1 2023-07-15 17:59:21 Invalid heartbeat 'charlie' from 141.36.69.58
+
+
+(** Pattern = Invalid heartbeat '[A-Za-z]+' from <HOST>$)
+
+
+(Fail2Ban uses Jails, which are a filter + an action.)
+(Create a jail conf file with the content below.)
+~# nano /etc/fail2ban/jail.d/hohono.conf
+[hohono]
+enabled = true
+bantime = -1
+filter = hohono
+banaction = hohono
+logpath = /var/log/hohono.log
+maxretry = 10
+findtime = 3600
+backend = polling
+
+
+(Create an action conf file with the conten below.)
+~# nano /etc/fail2ban/action.d/hohono.conf
+[Definition]
+actionstart = /root/naughtylist refresh
+actionban = /root/naughtylist add <ip>
+actionunban = /root/naughtylist del <ip>
+[Init]
+
+
+(Create a filter conf file with the conten below.)
+(The $ at the end of each failregex ensures we look 1 line at a time.)
+~# nano /etc/fail2ban/filter.d/hohono.conf
+[Definition]
+failregex = Failed login from <HOST> for \w+$
+            Login from <HOST> rejected due to unknown user name$
+            <HOST> sent a malformed request$
+            Invalid heartbeat '[A-Za-z]+' from <HOST>$
+
+
+(Reload the fail2ban-client to reprocess the log)
+~# fail2ban-client reload
+  *******************************************************************
+  * You stopped the attacking systems! You saved our systems!
+  *
+  * Thank you for all of your help. You are a talented defender!
+  *******************************************************************
+
+
+(If the challenge doesn't complete, then use the following to test your patterns.)
+~# fail2ban-regex --print-all-missed /var/log/hohono.log /etc/fail2ban/filter.d/hohono.conf > missed.txt
+~# nano missed.txt

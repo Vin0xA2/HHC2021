@@ -1,0 +1,24 @@
+jackfrosttower-network.zip (contains the pcap)
+Objective: Find the three trolls complained about a human. That human accessed network with non-compliant host.
+Hints: Wireshark display filters => "contains" keyword - and evil bits with ip.flags.rb
+  https://wiki.wireshark.org/DisplayFilters
+  https://datatracker.ietf.org/doc/html/rfc3514
+
+
+1) Use wireshark filter: ip.flags.rb == 1
+2) See some packets about POST requests to guest complaint pages.
+3) Use wireshark filter: ip.flags.rb == 1 && http.request.uri == "/feedback/guest_complaint.php"
+4) See the complaints in the form data.
+5) RClick on a column header > Column Preferences >
+  5a) [plus sign] to add new
+  5a) Fields = urlencoded-form.value
+  5a) Field Occurrence = 3
+  5b) (Optional to see the actual complaint) Repeat adding with Field Occurrence = 4
+6) Formdata occurrence 3 has the room number for the guest.
+7a) Room 1024 is the only one that appeared three times.
+7b) That person also accessed the guest complaint page with ip.flags.rb != 1
+7c) The evil bit in the IPv4 header is an April Fools joke. Here, the trolls have it set and the human doesn't have it set.
+8) Other parts of the formdata (occurrence 1) has the troll names.
+
+
+Answer: Flud, Hagg, Yaqh

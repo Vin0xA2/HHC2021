@@ -1,0 +1,80 @@
+In-game terminal (bigscan.gnmap from nmap -oG command)
+Objective: Answer all the questions in the quizme executable
+
+
+1) What port does 34.76.1.22 have open?
+~$ grep 34.76.1.22 bigscan.gnmap 
+  Host: 34.76.1.22 ()     Status: Up
+  Host: 34.76.1.22 ()     Ports: 62078/open/tcp//iphone-sync///      Ignored State: closed (999)
+Answer: 62078
+
+
+2) What port does 34.77.207.226 have open?
+~$ grep 34.77.207.226 bigscan.gnmap 
+  Host: 34.77.207.226 ()     Status: Up
+  Host: 34.77.207.226 ()     Ports: 8080/open/tcp//http-proxy///      Ignored State: filtered (999)
+Answer: 8080
+
+
+3) How many hosts appear "Up" in the scan?
+~$ grep "Status: Up" bigscan.gnmap | sort | uniq | wc -l
+Answer: 26054
+
+
+4) How many hosts have a web port open?  (Let's just use TCP ports 80, 443, and 8080)
+~$ grep -E " 80/| 443/| 8080/" bigscan.gnmap | sort | uniq | wc -l
+Answer: 14372
+
+
+5) How many hosts with status Up have no (detected) open TCP ports?
+~$ cut -d " " -f 2 bigscan.gnmap | sort | uniq -c | sort | head
+      1 34.76.102.33
+      1 34.76.103.39
+      1 34.76.104.210
+      1 34.76.105.161
+      1 34.76.106.148
+      1 34.76.106.216
+      1 34.76.109.20
+      1 34.76.11.16
+      1 34.76.110.57
+      1 34.76.117.1
+(Some IPs only have 1 line, so count how many of those)
+~$ cut -d " " -f 2 bigscan.gnmap | sort | uniq -c | grep "  1 " | wc -l 
+Answer: 402
+
+
+6) What's the greatest number of TCP ports any one host has open?
+~$ grep -oE "Ignored State: closed \([0-9]*\)" bigscan.gnmap | sort -g | head
+  Ignored State: closed (988)
+  Ignored State: closed (988)
+  Ignored State: closed (988)
+  Ignored State: closed (988)
+  Ignored State: closed (989)
+  Ignored State: closed (989)
+  Ignored State: closed (989)
+  Ignored State: closed (989)
+  Ignored State: closed (989)
+  Ignored State: closed (989)
+Answer: 12
+
+
+Alternative solutions:
+4) ~$ grep -E "(\s80|\s443|\s8080)/open" bigscan.gnmap | wc -l
+5) ~$ echo $((`grep Up bigscan.gnmap | wc -l` - `grep Ports bigscan.gnmap | wc -l`)
+6) ~$ grep -E "(open.*){12,}" bigscan.gnmap | wc -l && grep -E "(open.*){13,}" bigscan.gnmap | wc -l
+(RegEx for 12 count and 13 count of open. Some returned for 12 and none for 13. Looks like trial and error).
+
+
+Accidental lesson:
+Misunderstood Q6. This finds the largest port number.
+~$ grep -oE "[0-9]*/open/" bigscan.gnmap | sort -g | tail
+  62078/open/
+  62078/open/
+  62078/open/
+  62078/open/
+  62078/open/
+  62078/open/
+  62078/open/
+  62078/open/
+  62078/open/
+  62078/open/

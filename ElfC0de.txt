@@ -1,0 +1,176 @@
+In-game terminal (Inspired by SANS SEC573 pyWars.)
+Objective: Complete the python code challenges.
+Reference: https://www.freecodecamp.org/news/the-python-guide-for-beginners/
+
+
+==Level 0==(Example)
+import elf, munchkins, levers, lollipops, yeeters, pits
+# Grab our lever object
+lever = levers.get(0)
+munchkin = munchkins.get(0)
+lollipop = lollipops.get(0)
+# move to lever position
+elf.moveTo(lever.position)
+# get lever int and add 2 and submit val
+leverData = lever.data() + 2
+lever.pull(leverData)
+# Grab lollipop and stand next to munchkin
+elf.moveLeft(1)
+elf.moveUp(8)
+# Solve the munchkin's challenge
+munchList = munchkin.ask() # e.g. [1, 3, "a", "b", 4]
+answer_list = []
+for elem in munchList:
+    if type(elem) == int:
+        answer_list.append(elem)
+munchkin.answer(answer_list)
+elf.moveUp(2) # Move to finish
+
+
+==Level 1==(Move to location {"x":2,"y":2})
+import elf, munchkins, levers, lollipops, yeeters, pits
+elf.moveTo({"x":2,"y":2})
+
+
+==Level 2==(Get positions and manuver)
+import elf, munchkins, levers, lollipops, yeeters, pits
+# Gets all lollipops as a list
+all_lollipops = lollipops.get()
+lollipop1 = all_lollipops[1]
+lollipop0 = lollipops.get(0)
+# Move
+elf.moveTo(lollipop1.position)
+elf.moveTo(lollipop0.position)
+elf.moveTo({"x":2,"y":2})
+
+
+==Level 3==(Pull lever)
+import elf, munchkins, levers, lollipops, yeeters, pits
+lever0 = levers.get(0)
+lollipop0 = lollipops.get(0)
+elf.moveTo(lever0.position)
+lever0.pull(lever0.data()+2)  #pull with lever's curr value +2
+elf.moveTo({"x":2,"y":2})
+
+
+==Level 4==(Multiple levers)
+import elf, munchkins, levers, lollipops, yeeters, pits
+lever0, lever1, lever2, lever3, lever4 = levers.get()
+elf.moveLeft(2)
+lever4.pull("A String")  #Any string
+elf.moveUp(2)
+lever3.pull(True)  #Any boolean
+elf.moveUp(2)
+lever2.pull(1.0)  #Any int or float
+elf.moveUp(2)
+lever1.pull([1,2])  #Any list
+elf.moveUp(2)
+lever0.pull({"Apple":1,"Pi":2})  #Any dictionary
+elf.moveUp(2)
+
+
+==Level 5==(Conversions and Comparisons)
+import elf, munchkins, levers, lollipops, yeeters, pits
+lever0, lever1, lever2, lever3, lever4 = levers.get()
+elf.moveLeft(2)
+lever4.pull(lever4.data() + " concatenate")  #Concatenate a string
+elf.moveUp(2)
+lever3.pull(not lever3.data())  #Inverse the boolean
+elf.moveUp(2)
+lever2.pull(lever2.data() + 1)  #Curr value + 1
+elf.moveUp(2)
+appendedList = lever1.data()
+appendedList.append(1)
+lever1.pull(appendedList)  #Append int 1 to list
+elf.moveUp(2)
+appendedDict = lever0.data()
+appendedDict["strkey"]="strvalue"
+lever0.pull(appendedDict)  #Add dictionary value
+elf.moveUp(2)
+
+
+==Level 6==(Types and Conditionals)
+import elf, munchkins, levers, lollipops, yeeters, pits
+elf.moveUp(2)
+lever = levers.get(0)
+leverData = lever.data()
+leverDT = type(leverData)
+if leverDT == bool:
+	modData = not leverData
+elif leverDT == list:
+	modData = []
+	for x in leverData:
+		modData.append(x + 1)
+elif leverDT == str:
+	modData = leverData * 2
+elif leverDT == dict:
+	modData = {}
+	modData["a"] = leverData["a"] + 1
+else:
+	modData = leverData * 2
+lever.pull(modData)
+elf.moveUp(2)
+
+
+==Level 7==(Up Down Loopiness)
+import elf, munchkins, levers, lollipops, yeeters, pits
+Coordinates = [{"x":11,"y":1},{"x":9,"y":12},{"x":7,"y":1},{"x":5,"y":12},{"x":2,"y":2}]
+for position in Coordinates:
+	elf.moveTo(position)
+
+
+==Level 8==(Two Paths, Your Choice)
+import elf, munchkins, levers, lollipops, yeeters, pits
+Coordinates = [{"x":12,"y":10},{"x":0,"y":8},{"x":12,"y":1},{"x":10,"y":6},{"x":2,"y":4}]
+for position in Coordinates:
+	elf.moveTo(position)
+munchkin = munchkins.get(0)
+jsonData = munchkin.ask()
+for key in jsonData:
+	if jsonData[key] == "lollipop":
+		answer = key
+munchkin.answer(answer)
+elf.moveUp(2)
+
+
+==Level 9==(Yeeter Swirl)
+import elf, munchkins, levers, lollipops, yeeters, pits
+
+def func_to_pass_to_mucnhkin(list_of_lists):
+	sum = 0
+	for list in list_of_lists:
+		for val in list:
+			if type(val) == int:
+				sum += val
+	return sum
+
+all_levers = levers.get()
+moves = [elf.moveDown, elf.moveLeft, elf.moveUp, elf.moveRight] * 2
+moves2 = moves.pop()
+for i, move in enumerate(moves):
+	move(i+1)
+	all_levers[i].pull(i)
+moves2(8)
+elf.moveUp(2)
+elf.moveLeft(4)
+munchkin = munchkins.get(0)
+munchkin.answer(func_to_pass_to_mucnhkin)
+elf.moveUp(1)
+
+
+==Level 10==(Munchkin Dodging Finale)
+import elf, munchkins, levers, lollipops, yeeters, pits
+import time
+muns = munchkins.get()
+lols = lollipops.get()[::-1]  #lollipops list in reverse order
+for index, mun in enumerate(muns):
+	wait = True
+	munchkin = muns[index]
+	lollipop = lols[index]
+	while wait:
+		if abs(munchkin.position["x"] - elf.position["x"]) == 6:
+			wait = False
+			elf.moveTo(lollipop.position)
+		else:
+			time.sleep(0.05)
+elf.moveTo({"x":2,"y":2})

@@ -1,0 +1,103 @@
+In-game Terminal
+Objective: Follow the instructions.
+
+
+The Instance Metadata Service (IMDS) is a virtual server for cloud assets at the IP address 169.254.169.254.
+(Send a couple ping packets to the server.)
+~$ ping -c 3 169.254.169.254
+
+
+IMDS provides information about currently running virtual machine instances. You can use it to manage and configure cloud nodes. IMDS is used by all major cloud providers.
+(Developers can automate actions using IMDS; with cURL.)
+~$ curl http://169.254.169.254
+
+
+Different providers will have different formats for IMDS data. We're using an AWS-compatible IMDS server that returns 'latest' as the default response.
+(Access the 'latest' endpoint.)
+~$ curl http://169.254.169.254/latest
+
+
+IMDS returns two new endpoints: dynamic and meta-data.
+(Access dynamic for info about the instance itself.)
+~$ curl http://169.254.169.254/latest/dynamic
+  fws/instance-monitoring
+  instance-identity/document
+  instance-identity/pkcs7
+  instance-identity/signature
+
+
+The instance identity document can be used by developers to understand the instance details.
+(Access instance-identity/document)
+~$ curl http://169.254.169.254/latest/dynamic/instance-identity/document
+
+
+(Data in JSON format. Pipe to jq)
+~$ curl http://169.254.169.254/latest/dynamic/instance-identity/document | jq
+    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                   Dload  Upload   Total   Spent    Left  Speed
+  100   451  100   451    0     0  56375      0 --:--:-- --:--:-- --:--:-- 90200
+  {
+    "accountId": "PCRVQVHN4S0L4V2TE",
+    "imageId": "ami-0b69ea66ff7391e80",
+    "availabilityZone": "np-north-1f",
+    "ramdiskId": null,
+    "kernelId": null,
+    "devpayProductCodes": null,
+    "marketplaceProductCodes": null,
+    "version": "2017-09-30",
+    "privateIp": "10.0.7.10",
+    "billingProducts": null,
+    "instanceId": "i-1234567890abcdef0",
+    "pendingTime": "2021-12-01T07:02:24Z",
+    "architecture": "x86_64",
+    "instanceType": "m4.xlarge",
+    "region": "np-north-1"
+  }
+
+
+(^ details about the instance when it was launched. Developers can use this information to optimize applications based on the instance launch parameters.)
+
+
+(Access meta-data.)
+~$ curl http://169.254.169.254/latest/meta-data
+
+
+(Developer can interrogate information about the system.)
+(Access public-hostname. Plus ; echo because they don't come with carriage returns)
+~$ curl http://169.254.169.254/latest/meta-data/public-hostname ; echo
+  ec2-192-0-2-54.compute-1.amazonaws.com
+
+
+(Even AWS Identity and Access Management (IAM) credentials accessible.)
+~$ curl http://169.254.169.254/latest/meta-data/iam/security-credentials
+  elfu-deploy-role
+
+
+(Request the AWS keys associated with the role.)
+~$ curl http://169.254.169.254/latest/meta-data/iam/security-credentials/elfu-deploy-role
+  {
+    "Code": "Success",
+    "LastUpdated": "2021-12-02T18:50:40Z",
+    "Type": "AWS-HMAC",
+    "AccessKeyId": "AKIA5HMBSK1SYXYTOXX6",
+    "SecretAccessKey": "CGgQcSdERePvGgr058r3PObPq3+0CfraKcsLREpX",
+    "Token": "NR9Sz/7fzxwIgv7URgHRAckJK0JKbXoNBcy032XeVPqP8/tWiR/KVSdK8FTPfZWbxQ==",
+    "Expiration": "2026-12-02T18:50:40Z"
+  }
+
+
+(IMDS servers using IMDSv1 don't require authentication. IMDSv2 requires authentication (more secure) but not default.)
+(Request token with X-aws-ec2-metadata-token-ttl-seconds header to indicate length of use (1 ~ 21,600 seconds).)
+(The script gettoken.sh requests the token and save it to TOKEN env variable.)
+  TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"`
+
+
+(Run the script and view the env variable.)
+~$ source gettoken.sh
+~$ echo $TOKEN
+  Uv38ByGCZU8WP18PmmIdcpVmx00QA3xNe7sEB9Hixkk=
+
+
+(Make IMDSv2 request with the X-aws-ec2-metadata-token header in curl request.)
+~$ curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/placement/region
+  np-north-1

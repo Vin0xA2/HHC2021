@@ -1,0 +1,22 @@
+In-game terminal
+Objective: game requires 2 players. Enable single player mode and fuel the sleigh.
+
+
+(Check the cookie)
+  HOHOHO = %7B%22single_player%22%3Afalse%7D
+
+
+(URL decode with CyberChef or the console tab of Chrome Dev Tools)
+decodeURIComponent('%7B%22single_player%22%3Afalse%7D')
+  {"single_player":false}
+
+
+(Simply change false to true in the cookie value is fine)
+  HOHOHO = %7B%22single_player%22%3Atrue%7D
+
+
+(Create a Room in the in-game terminal. Right click > Inspect > Console tab > set a variable to true.)
+single_player_mode=true
+
+
+(Computer player will join. Click off/on button to start and play through the game in fully single player mode.)

@@ -1,0 +1,14 @@
+In-game terminal
+Objective: Find which file was modified by Jack Frost.
+Hint: Files are in formats of YYYY-MM-DD.docx
+
+
+(Examine metadata and display them with TAG names)
+~$ exiftool -s 2021-12-25.docx
+
+
+(List LastModifiedBy of all .docx files)
+~$ exiftool -LastModifiedBy *.docx
+
+
+Answer: 2021-12-21.docx

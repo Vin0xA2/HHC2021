@@ -1,0 +1,16 @@
+In-game terminal
+Objective: Chomp all the True statements. Complete a stage in Potpourri at Intermediate or higher to get a special achievement!
+References:
+  http://www.natna.info/English/Teaching/CSI30-materials/Chapter1-cheat-sheet.pdf
+  http://notes.imt-decal.org/sets/cheat-sheet.html
+
+Controls:
+  Arrow keys or WASD: Move Chompy
+  Enter or Space: Chomp the current expression
+  Click: Navigate to adjacent squares and chomp the square Chompy's in
+  Esc: Pause the game
+  i: Toggle text and iconography
+
+Lessons learned:
+  A << B, left shifts A by B bits.
+  A >> B, right shifts A by B bits.

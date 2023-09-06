@@ -1,0 +1,54 @@
+**********
+Caramel Santaigo
+**********
+In-game terminal
+Objective: Analyze clues (OSINT) and track an elf around the world.
+Hints:
+  Coordinate systems other than lat/long: MGRS (Military Grid Ref Sys) and what3words.
+  Location info in metadata.
+  Bypass gameplay by looking at the cookie. Flask cookies can't be forged without the secret, but can be decoded and read.
+  Clay Moody's talk.
+
+
+Click "Investigate" for clues to next location.
+Click "Depart by sleigh" to go to the next location.
+Click "Visit InterRink" to filter elves with extra clues from location clues.
+
+
+InterRink example:
+5 Elf attributes. Select a value for each, click Filter Elves. Below values get Caramel Santaigo.
+-Language spoken: C#
+-Preferred social medium: Discord
+-Preferred indents: Tabs
+-Fandom: Doctor Who
+-Pronounces "GIF": Hard "G"
+
+
+(Each session will be different, use the clue to determine where to go next and which elf we are following)
+
+
+Location 1 Investigate clues (changes each session):
+-Next location: "staring desire frost" (what3words)
+-UNICODE 00ED or 0237
+-Dressed for -9.0'C and clear conditions.
+**Slack app (Elves: Morcel Nougat, Ginger Breddie, Ribb Bonbowford)
+Next: Reykjavik, Iceland
+
+
+Location 2 Investigate clues (changes each session):
+-Next location: "only milder vanilla" (what3words)
+-Phone works on 1500 MHz LTE band.
+-Dressed for 12'C and overcast.
+**C# (Elves: Ribb Bonbowford)
+Next: Tokyo, Japan
+
+
+Location 3 Investigate clues (changes each session):
+-Wants to experience hogmanay after Christmas.
+-Blurry image: 364901ef5228.jpg
+-Dressed for 6.0'C and clear conditions.
+**Tabs for indents (Elves: Ribb Bonbowford)
+Next: Edinburgh, Scotland
+
+
+Caught up with elf in time: Ribb Bonbowford

@@ -1,0 +1,5 @@
+In-game terminal (Frostavator.jpg)
+Objective: rearrange the logic gates to get power to all the outputs.
+Reference: https://www.geeksforgeeks.org/introduction-of-logic-gates/ (logic-gates.jpg)
+
+Trial and error. Move the logic gates around to get the solution. (FrostavatorSolved.jpg)

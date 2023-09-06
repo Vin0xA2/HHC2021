@@ -1,0 +1,20 @@
+In-game terminal
+Objective: Investigate the system at http://solrpower.kringlecastle.com:8983/ and access /home/solr/kringle.txt. Run runtoanswer to submit the answer.
+Hints:
+  /web/ directory is listening on port 8080.
+  Netcat listener on TCP port 4444.
+
+
+(The HELP.md file has a step by step walkthrough)
+~$ less HELP.md
+
+
+(Or view it in the browser)
+https://gist.github.com/joswr1ght/fb361f1f1e58307048aae5c0f38701e4
+
+
+Summary:
+  1) Start a marshalsec LDAP server to point the malicious Java Class
+  2) Create the malicious Java Class on web port 8080 to shovel a shell to Netcat listener on TCP port 4444.
+  3) Access the target with a dummy URL parameter to let Log4j misinterpret it and connect to the LDAP server.
+  4) Netcat listener gains shell access and can just read the target file for the answer.

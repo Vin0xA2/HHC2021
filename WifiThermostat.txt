@@ -1,0 +1,170 @@
+In-game terminal
+Objective: connect to wifi thermostat and turn up the heat.
+
+
+(Stand in front of the Frost Tower door, go to items menu, open Wifi CLI, and search for wifi connections.)
+~$ iwlist wlan0 scanning
+  wlan0     Scan completed :
+            Cell 01 - Address: 02:4A:46:68:69:21
+                      Frequency:5.2 GHz (Channel 40)
+                      Quality=48/70  Signal level=-62 dBm  
+                      Encryption key:off
+                      Bit Rates:400 Mb/s
+                      ESSID:"FROST-Nidus-Setup"
+
+
+(Connect to wifi.)
+~$ iwconfig wlan0 essid "FROST-Nidus-Setup" 
+  ** New network connection to Nidus Thermostat detected! Visit http://nidus-setup:8080/ to complete setup
+  (The setup is compatible with the 'curl' utility)
+
+
+(cURL the website.)
+~$ curl "http://nidus-setup:8080/"
+  ◈──────────────────────────────────────────────────────────────────────────────◈
+
+  Nidus Thermostat Setup
+
+  ◈──────────────────────────────────────────────────────────────────────────────◈
+
+  WARNING Your Nidus Thermostat is not currently configured! Access to this
+  device is restricted until you register your thermostat » /register. Once you
+  have completed registration, the device will be fully activated.
+
+  In the meantime, Due to North Pole Health and Safety regulations
+  42 N.P.H.S 2600(h)(0) - frostbite protection, you may adjust the temperature.
+
+  API
+
+  The API for your Nidus Thermostat is located at http://nidus-setup:8080/apidoc
+
+
+(Try to register but need the serial number which we don't have access to.)
+~$ curl "http://nidus-setup:8080/register"
+  ◈──────────────────────────────────────────────────────────────────────────────◈
+
+  Nidus Thermostat Registration
+
+  ◈──────────────────────────────────────────────────────────────────────────────◈
+
+  Welcome to the Nidus Thermostat registration! Simply enter your serial number
+  below to get started. You can find the serial number on the back of your
+  Nidus Thermostat as shown below:
+
+  +------------------------------------------------------------------------------+
+  |                                                                              |
+  |                                                                              |
+  |                              ....'''''''''''''...                            |
+  |                         .'''...  ...............',,,'.                       |
+  |                     .''.        ........''',,,;;;;,'.',,'.                   |
+  |                  .,'.                   ......'',;;;;;;,.',;.                |
+  |                ',.l.                          ....'',;:::;:xl:,              |
+  |              ,,.                                  ....',;:cl:,,::            |
+  |            .,,                      ,::::,           ....';:cc:;cx,          |
+  |          .'  .                     :dkkkkd;             ...';:ccdc.;.        |
+  |         ..                                                ...';::c;.,'       |
+  |        '.                                                  ...';:c:;'.;      |
+  |       .                                                      ...,;::;,.;     |
+  |      ..                          ....'.'.'.''                 ...';::;'.,    |
+  |      .                          .. ';'.'..,..                  ...,;::;.;.   |
+  |     '                                ..  .. .                   ...,::;,.c   |
+  |     .                                                           ...';::;';.  |
+  |    '                                                             ...,;:;,.;  |
+  |    ,                              ...........                    ...,;:;;.c  |
+  |    ,      ...                     .  .....  .                   .;:l:;::;.l  |
+  |    ;      .x.                     ....   ....                   .:ccc;:;;.l  |
+  |    ,      ...                     ......... .                   ...',;;;,.c  |
+  |    '.                             ...... . ..                    ...,;;;'.,  |
+  |     ;                             .  .   ....                   ...',;;,.:   |
+  |     ;                             ...........                  ....',;,'.;   |
+  |      :                                                        ....',,,'.c    |
+  |      .,              ----->       xx.x..x.x.x                .....',,'.:.    |
+  |       ''                                                    .....',,'.:.     |
+  |        ',                ......'';oxxxxxxdc.              ......''''.:.      |
+  |         .:               ....'ldlx00KKKKXXXd.l;         ......',''..:.       |
+  |           ;,'              ...,;coO0000KKKO:...       .......',;lc:;         |
+  |            .l;                ....,;;;;;,'....... .........'''.'ol.          |
+  |              'o;..                .......................'',''lo.            |
+  |                .:o.                     ..................'kdc.              |
+  |                  .,c;.                     .............,cc'                 |
+  |                      ':c:'.              ..........';cc:.                    |
+  |                          .;ccc:;,'.........',;:cllc,.                        |
+  |                               ...,;;::::::;,'..                              |
+  |                                                                              |
+  |                                                                              |
+  |                                                                              |
+  |                                                                              |
+  +------------------------------------------------------------------------------+
+
+
+
+    Serial Number: ______________________
+
+
+               +------------+
+               |   Submit   |
+               +------------+
+
+
+(Though, temperature change is still possible.)
+~$ curl "http://nidus-setup:8080/apidoc"
+  ◈──────────────────────────────────────────────────────────────────────────────◈
+
+  Nidus Thermostat API
+
+  ◈──────────────────────────────────────────────────────────────────────────────◈
+
+  The API endpoints are accessed via:
+
+  http://nidus-setup:8080/api/<endpoint>
+
+  Utilize a GET request to query information; for example, you can check the
+  temperatures set on your cooler with:
+
+  curl -XGET http://nidus-setup:8080/api/cooler
+
+  Utilize a POST request with a JSON payload to configuration information; for
+  example, you can change the temperature on your cooler using:
+
+  curl -XPOST -H 'Content-Type: application/json' \
+    --data-binary '{"temperature": -40}' \
+    http://nidus-setup:8080/api/cooler
+
+
+  ● WARNING: DO NOT SET THE TEMPERATURE ABOVE 0! That might melt important furniture
+
+  Available endpoints
+
+  ┌─────────────────────────────┬────────────────────────────────┐
+  │ Path                        │ Available without registering? │ 
+  ├─────────────────────────────┼────────────────────────────────┤
+  │ /api/cooler                 │ Yes                            │ 
+  ├─────────────────────────────┼────────────────────────────────┤
+  │ /api/hot-ice-tank           │ No                             │ 
+  ├─────────────────────────────┼────────────────────────────────┤
+  │ /api/snow-shower            │ No                             │ 
+  ├─────────────────────────────┼────────────────────────────────┤
+  │ /api/melted-ice-maker       │ No                             │ 
+  ├─────────────────────────────┼────────────────────────────────┤
+  │ /api/frozen-cocoa-dispenser │ No                             │ 
+  ├─────────────────────────────┼────────────────────────────────┤
+  │ /api/toilet-seat-cooler     │ No                             │ 
+  ├─────────────────────────────┼────────────────────────────────┤
+  │ /api/server-room-warmer     │ No                             │ 
+  └─────────────────────────────┴────────────────────────────────┘
+
+
+(Looks like cooler is the only available endpoint. Set that temperature above 0.)
+~$ curl -XPOST -H 'Content-Type: application/json' \
+> --data-binary '{"temperature": 1}' \
+> "http://nidus-setup:8080/api/cooler"
+  {
+    "temperature": 0.13,
+    "humidity": 12.85,
+    "wind": 6.84,
+    "windchill": -2.2,
+    "WARNING": "ICE MELT DETECTED!"
+  }
+
+
+!!!Door is now open!!!

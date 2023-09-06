@@ -1,0 +1,101 @@
+https://hhc21.bossworkshops.io/en-US/app/SA-hhc/santadocs
+Objective: Complete 8 Splunk analysis tasks.
+
+
+Task 1
+Most used git command.
+  (Sample search 4)
+  (The search)
+    index=main sourcetype=journald source=Journald:Microsoft-Windows-Sysmon/Operational EventCode=1 user=eddie 
+    | stats count by CommandLine 
+    | sort - count
+
+Answer: git status
+
+
+Task 2
+Remote repo used as the origin for the 'partnerapi' repo (the correct one).
+  (Same search from Task 1)
+  (Ctrl+F "origin" has these results:)
+    git remote add origin git@github.com:elfnp3/partnerapi.git
+    git remote add origin https://github.com/elfnp3/partnerapi.git
+    git remote remove origin
+  (One is wrong so removed, click on each add event to see the time.)
+  (The latter one is the correct one.)
+
+Answer: git@github.com:elfnp3/partnerapi.git
+
+
+Task 3
+The 'partnerapi' project uses docker. Full docker command to start the project.
+  (Same search from Task 1)
+  (Ctrl+F "docker")
+  (Google search each command for what they do)
+
+Answer: docker compose up
+
+
+Task 4
+Been testing automated static application security testing (SAST) in GitHub. Vuln report received as JSON via GitHub webhooks. Name of vuln GitHub repo cloned for testing.
+  (Sample search 6)
+  (The search)
+    index=main sourcetype=github_json
+  (Use "All Fields" in the sidebar to find interesting fields)
+  (Alert message text field containing "vulnerability" is interesting)
+  (Add to search)
+  (reposity.name field has the answer)
+
+Answer: dvws-node
+
+
+Task 5
+JavaScript library added from NPM to the 'partnerapi' project?
+  (Same search from Task 1)
+  (Ctrl+F "npm")
+    node /usr/bin/npm install holiday-utils-js
+
+Answer: holiday-utils-js
+
+
+Task 6
+From baseline of network activity generated, what full process_name is sus?
+  (https://hhc21.bossworkshops.io/en-US/app/SA-hhc/search?q=search%20index%3Dmain%20sourcetype%3Djournald%20source%3DJournald%3AMicrosoft-Windows-Sysmon%2FOperational%20EventCode%3D3%20user%3Deddie%20NOT%20dest_ip%20IN%20(127.0.0.*)%20NOT%20dest_port%20IN%20(22%2C53%2C80%2C443)%20%0A%7C%20stats%20count%20by%20dest_ip%20dest_port&display.page.search.mode=smart&dispatch.sample_ratio=1&workload_pool=&earliest=0&latest=now&sid=1688088422.27&display.page.search.tab=statistics&display.general.type=statistics)
+  (The search)
+    index=main sourcetype=journald source=Journald:Microsoft-Windows-Sysmon/Operational EventCode=3 user=eddie NOT dest_ip IN (127.0.0.*) NOT dest_port IN (22,53,80,443) 
+    | stats count by dest_ip dest_port
+  (Result)
+    dest_ip		dest_port	count
+    192.30.255.113	9418		2
+    54.175.69.219	16842		1
+  (Port 9418 looks like used by git)
+  (Port 16842 is no reversed.)
+  (process_exec and process_name has stuff about nc.openbsd)
+  (First recommended google search when typing nc openbsd is about reverse shell)
+
+Answer: /usr/bin/nc.openbsd
+
+
+Task 7
+Parent process of the one in task 6. Other child processes spawned and how many files accessed?
+  (PID from task 6 = 6791)
+  (The search)
+    index=main sourcetype=journald source=Journald:Microsoft-Windows-Sysmon/Operational PID=6791
+  (All Fields sidebar => parent_process_id = 6788)
+  (New search)
+    index=main sourcetype=journald source=Journald:Microsoft-Windows-Sysmon/Operational parent_process_id=6788
+  (Other process has PID = 6790)
+  (CommandLine has cat linux command on 6 different files)
+
+Answer: 6
+
+
+Task 8
+Use Splunk and Sysmon Process creation data to ID the sus Bast script.
+  (The search to look at the parent process)
+    index=main sourcetype=journald source=Journald:Microsoft-Windows-Sysmon/Operational PID=6788
+  (One event has ParentCommandLine=/bin/bash preinstall.sh)
+
+Answer: preinstall.sh
+
+
+Completion message: Thank you for helping Santa complete his investigation! Santa says you're a whiz!
