@@ -1,4 +1,8 @@
 # 2021 SANS Holiday Hack Challenge &amp; KringleCon
+Try them out yourself at: https://www.sans.org/mlp/holiday-hack-challenge-2021/
+
+After completing the 2022 SANS Holiday Hack Challenge, I wanted to try out previous years' challenges to learn more. Below are my notes and solutions. The most memorable challenge is where I get to launch a blind SQL injection attack. It was a mysterious concept while learning about it in class. But it is a completely different experience to try it out first hand. I hope more people get to try these challenges out. Enjoy.
+
 ## Bonus Content
 [Blue Log4j](Notes/Log4j(blue).txt)
 
