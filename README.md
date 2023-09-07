@@ -1,65 +1,65 @@
 # 2021 SANS Holiday Hack Challenge &amp; KringleCon
 ## Bonus Content
-[Blue Log4j](Log4j(blue).txt)
+[Blue Log4j](Notes/Log4j(blue).txt)
 
-[Red Log4j](Log4j(red).txt)
+[Red Log4j](Notes/Log4j(red).txt)
 
 ## 2) Where in the World is Caramel Santaigo?
-[Exif Metadata](ExifMetadata.txt)
+[Exif Metadata](Notes/ExifMetadata.txt)
 
-[Caramel Santaigo](CaramelSantaigo.txt)
+[Caramel Santaigo](Notes/CaramelSantaigo.txt)
 
 ## 3) Thaw Frost Tower's Entrance
-[Grepping for Gold](GreppingForGold.txt)
+[Grepping for Gold](Notes/GreppingForGold.txt)
 
-[Wifi Thermostat](WifiThermostat.txt)
+[Wifi Thermostat](Notes/WifiThermostat.txt)
 
 ## 4) Slot Machine Investigation
-[Logic Muncher](LogicMuncher.txt)
+[Logic Muncher](Notes/LogicMuncher.txt)
 
-[Slot Machines](SlotMachines.txt)
+[Slot Machines](Notes/SlotMachines.txt)
 
 ## 5) Strange USB Device
-[IPv6 Sandbox](IPv6Sandbox.txt)
+[IPv6 Sandbox](Notes/IPv6Sandbox.txt)
 
-[Strange USB](StrangeUSB.txt)
+[Strange USB](Notes/StrangeUSB.txt)
 
 ## 6) Shellcode Primer
-[Holiday Hero](HolidayHero.txt)
+[Holiday Hero](Notes/HolidayHero.txt)
 
-[Shellcode Primer](ShellcodePrimer.txt)
+[Shellcode Primer](Notes/ShellcodePrimer.txt)
 
 ## 7) Printer Exploitation
 *Hints were from previous challenge: Shellcode Primer.
 
-[Printer Exploitation](PrinterExploitation.txt)
+[Printer Exploitation](Notes/PrinterExploitation.txt)
 
 ## 8) Kerberoasting on an Open Fire
-[Hohono (Fail2Ban)](Hohono(Fail2Ban).txt)
+[Hohono (Fail2Ban)](Notes/Hohono(Fail2Ban).txt)
 
-[Kerberoasting](Kerberoasting.txt)
+[Kerberoasting](Notes/Kerberoasting.txt)
 
 ## 9) Splunk!
-[Yara Rules](YaraRules.txt)
+[Yara Rules](Notes/YaraRules.txt)
 
-[Splunk!](Splunk.txt)
+[Splunk!](Notes/Splunk.txt)
 
 ## 10) Now Hiring!
-[IMDS](IMDS.txt)
+[IMDS](Notes/IMDS.txt)
 
-[Job Applications](NowHiring.txt)
+[Job Applications](Notes/NowHiring.txt)
 
 ## 11) Customer Complaint Analysis
-[Strace Ltrace Retrace](SLRetrace.txt)
+[Strace Ltrace Retrace](Notes/SLRetrace.txt)
 
-[Customer Complaint](CustomerComplaint.txt)
+[Customer Complaint](Notes/CustomerComplaint.txt)
 
 ## 12) Frost Tower Website Checkup
-[The Elf C0de - Python Edition](ElfC0de.txt)
+[The Elf C0de - Python Edition](Notes/ElfC0de.txt)
 
-[Website Checkup](WebsiteCheckup.txt) | [Python Script](blindSQLi.py)
+[Website Checkup](Notes/WebsiteCheckup.txt) | [Python Script](Notes/blindSQLi.py)
 
 ## 13) FPGA Programming
-[Frostavator](Frostavator.txt) | [Unsolved](Frostavator.jpg) | [Solved](FrostavatorSolved.jpg)
+[Frostavator](Notes/Frostavator.txt) | [Unsolved](Notes/Frostavator.jpg) | [Solved](Notes/FrostavatorSolved.jpg)
 
-[FPGA](FPGA.txt)
+[FPGA](Notes/FPGA.txt)
